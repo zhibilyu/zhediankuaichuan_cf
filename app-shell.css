@@ -3,8 +3,8 @@
   --neon-gold: #ffd24a;
   --deep-panel: rgba(7, 18, 16, .82);
   --text-panel: #d7fff7;
-  --scan-offset: max(0px, calc((100dvh - 100vw) / 2));
-  --scan-size: 100vw;
+  --scan-top: clamp(220px, 29svh, 300px);
+  --scan-bottom: clamp(170px, 22svh, 230px);
 }
 
 * {
@@ -67,8 +67,7 @@ button {
 
 .top-panel {
   top: 0;
-  min-height: 220px;
-  height: max(220px, var(--scan-offset));
+  height: var(--scan-top);
   padding: calc(env(safe-area-inset-top, 0px) + 54px) 0 0 20px;
   overflow: hidden;
 }
@@ -203,7 +202,7 @@ button {
 
 .bottom-panel {
   bottom: 0;
-  height: max(190px, var(--scan-offset));
+  height: var(--scan-bottom);
 }
 
 #status_panel {
@@ -248,29 +247,29 @@ button {
 }
 
 #crosshair1 {
-  top: var(--scan-offset);
-  right: 0;
+  top: var(--scan-top) !important;
+  right: 0 !important;
   border-top: 4px solid;
   border-right: 4px solid;
 }
 
 #crosshair2 {
-  bottom: var(--scan-offset);
-  left: 0;
+  bottom: var(--scan-bottom) !important;
+  left: 0 !important;
   border-left: 4px solid;
   border-bottom: 4px solid;
 }
 
 #crosshair3 {
-  top: var(--scan-offset);
-  left: 0;
+  top: var(--scan-top) !important;
+  left: 0 !important;
   border-top: 4px solid;
   border-left: 4px solid;
 }
 
 #crosshair4 {
-  right: 0;
-  bottom: var(--scan-offset);
+  right: 0 !important;
+  bottom: var(--scan-bottom) !important;
   border-right: 4px solid;
   border-bottom: 4px solid;
 }

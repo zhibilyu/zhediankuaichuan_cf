@@ -179,6 +179,29 @@ if (fs.existsSync(manifestPath)) {
   }
 }
 
+const shellCssPath = path.join(root, 'app-shell.css');
+if (fs.existsSync(shellCssPath)) {
+  const css = fs.readFileSync(shellCssPath, 'utf8');
+  const cssExpectations = [
+    '--scan-top:',
+    '--scan-bottom:',
+    'top: var(--scan-top) !important',
+    'bottom: var(--scan-bottom) !important',
+    'right: 0 !important',
+    'left: 0 !important',
+  ];
+
+  for (const expected of cssExpectations) {
+    if (!css.includes(expected)) {
+      errors.push(`app-shell.css must pin camera crosshairs away from the header: ${expected}`);
+    }
+  }
+
+  if (css.includes('--scan-offset')) {
+    errors.push('app-shell.css must not use the old centered --scan-offset crosshair layout');
+  }
+}
+
 for (const swName of ['recv-sw.js', 'sw.js']) {
   const swPath = path.join(root, swName);
   if (fs.existsSync(swPath)) {
