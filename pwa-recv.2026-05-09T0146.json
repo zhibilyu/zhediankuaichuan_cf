@@ -1,12 +1,12 @@
 {
-	"lang": "en",
+	"lang": "zh-CN",
 	"dir": "ltr",
-	"name": "cimbar.org Receiver",
-	"short_name": "cimbar recv",
+	"name": "浙电快传",
+	"short_name": "浙电快传",
 	"icons": [{"src":"icon-192x192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512x512.png","sizes":"512x512","type":"image/png","purpose": "any"},{"src":"icon-512x512-maskable.png","sizes":"512x512","type":"image/png","purpose": "maskable"}],
 	"scope": "/",
 	"start_url": "/",
 	"display": "fullscreen",
-	"theme_color": "aliceblue",
+	"theme_color": "#020706",
 	"background_color": "black"
 }

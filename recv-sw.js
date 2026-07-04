@@ -1,7 +1,9 @@
 
-var _cacheName = 'cimbar-recv-js-v2026-05-09T0146';
+var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42';
 var _cacheFiles = [
   '/',
+  '/app-shell.css',
+  '/app-shell.js',
   '/index.html',
   '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',

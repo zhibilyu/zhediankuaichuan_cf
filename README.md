@@ -1,23 +1,18 @@
-# libcimbar Receiver for Cloudflare Pages
+# 浙电快传 Cloudflare Pages Receiver
 
-This repository deploys the libcimbar web decoder to Cloudflare Pages. It is intended to behave like `re.cimbar.org`, which redirects to the upstream receiver page at `https://cimbar.org/recv.html`.
-
-The root route `/` serves the receiver UI directly.
-
-## Source
-
-- Receiver source: `sz3/libcimbar` release `v0.6.5`, asset `cimbar.wasm.tar.gz`
-- Release asset SHA-256: `639163eb6083235553f1a69f0ca45a1d43df37d5aca09ec5814fca806a0d9993`
-- Receiver entry copied to both `index.html` and `recv.html`
-- Runtime version marker: `2026-05-09T0146`
-
-The issue that motivated this deployment is:
+This repository deploys a mobile-only Cloudflare Pages receiver for 浙电快传. The web UI mirrors the Android APK:
 
 ```text
-https://github.com/sz3/libcimbar/issues/170
+ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk
 ```
 
-That issue confirms the iPhone-compatible browser decoder is the receiver page, not the encoder page.
+The page keeps the libcimbar browser decoder/WASM runtime from the upstream receiver, but replaces the visible shell with the Android-style scanner interface: title, reset/usage/about buttons, centered camera scan area, receive progress panel, status panel, and save/share actions after a file is received.
+
+The previous Cloudflare Pages decoder state is backed up as the Git tag:
+
+```text
+beifen_202607042120
+```
 
 ## Cloudflare Pages Settings
 
@@ -37,11 +32,19 @@ Build command: npm run validate
 Build output directory: .
 ```
 
+Cloudflare Pages must serve the site over HTTPS so the mobile browser can access the camera.
+
 ## Routes
 
-- Decoder root: `/`
-- Decoder aliases: `/recv`, `/receive`, `/receiver`
+- Mobile receiver root: `/`
+- Receiver aliases: `/recv`, `/receive`, `/receiver`
 - Legacy encoder aliases: `/send`, `/encoder` redirect back to `/`
+
+## Source Runtime
+
+- Web receiver runtime: `sz3/libcimbar` release `v0.6.5`, asset `cimbar.wasm.tar.gz`
+- Runtime version marker: `2026-05-09T0146`
+- Android UI reference: `ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk`
 
 ## Validation
 
@@ -51,21 +54,10 @@ Run this before deploying:
 npm run validate
 ```
 
-The validation script checks that:
+On Windows PowerShell, use:
 
-- local HTML, JavaScript, manifest, service worker, icon, and WASM references resolve
-- `_headers` serves WASM as `application/wasm`
-- `index.html` is the decoder entry, not the encoder entry
-
-## Direct Deploy With Wrangler
-
-```bash
-npm run validate
-npx wrangler pages deploy . --project-name libcimbar
+```powershell
+npm.cmd run validate
 ```
 
-## Notes
-
-Deploy this site at the domain root. The receiver uses root-scoped service workers and PWA manifests.
-
-Cloudflare Pages provides HTTPS by default, which is required for browser camera access.
+The validation script checks that local HTML, CSS, JavaScript, manifest, service worker, icon, and WASM references resolve, and that the root page is the mobile 浙电快传 receiver rather than the legacy Cimbar encoder/decoder page.
