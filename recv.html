@@ -38,6 +38,7 @@
     <div id="crosshair1" class="crosshairs" aria-hidden="true"></div>
     <div id="crosshair2" class="crosshairs" aria-hidden="true"></div>
     <div id="crosshair4" class="crosshairs static-xhair" aria-hidden="true"></div>
+    <button id="camera_start" class="camera-start" type="button" hidden>点击开启摄像头</button>
 
     <section class="bottom-panel" aria-label="接收状态">
       <button id="status_panel" type="button">对准动态码开始接收。</button>
@@ -85,9 +86,43 @@
     }
 
     var video = document.querySelector('#video');
+    var receiverRuntimeReady = false;
+    var receiverCameraAttempted = false;
+
+    function prepareReceiverVideo() {
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+    }
+
+    function startReceiverCamera(force) {
+      prepareReceiverVideo();
+      if (!receiverRuntimeReady) {
+        return false;
+      }
+      if (video.srcObject) {
+        var playPromise = video.play();
+        if (playPromise && playPromise.catch) {
+          playPromise.catch(function () {});
+        }
+        return true;
+      }
+      if (receiverCameraAttempted && !force) {
+        return false;
+      }
+      receiverCameraAttempted = true;
+      Recv.init_video(video);
+      return true;
+    }
+
+    window.ZheDianKuaiChuanStartCamera = startReceiverCamera;
+
     var Module = {};
     Module.onRuntimeInitialized = () => {
-      Recv.init_video(video);
+      receiverRuntimeReady = true;
+      startReceiverCamera(false);
     };
   </script>
 

@@ -30,6 +30,7 @@ const mobileReceiverExpectations = [
   'id="menu_usage"',
   'id="menu_about"',
   'id="receive_progress_panel"',
+  'id="camera_start"',
   'id="status_panel"',
   '对准动态码开始接收。',
   'ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
@@ -185,6 +186,8 @@ if (fs.existsSync(shellCssPath)) {
   const cssExpectations = [
     '--scan-top:',
     '--scan-bottom:',
+    '--scan-size: 100vw',
+    '--bottom-panel-height:',
     'top: var(--scan-top) !important',
     'bottom: var(--scan-bottom) !important',
     'right: 0 !important',
@@ -199,6 +202,9 @@ if (fs.existsSync(shellCssPath)) {
 
   if (css.includes('--scan-offset')) {
     errors.push('app-shell.css must not use the old centered --scan-offset crosshair layout');
+  }
+  if (css.includes('--scan-frame-left') || css.includes('--scan-frame-size')) {
+    errors.push('app-shell.css must not use the centered scan-frame layout; the scan frame should stay full-width');
   }
 }
 

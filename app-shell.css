@@ -3,8 +3,11 @@
   --neon-gold: #ffd24a;
   --deep-panel: rgba(7, 18, 16, .82);
   --text-panel: #d7fff7;
-  --scan-top: clamp(220px, 29svh, 300px);
-  --scan-bottom: clamp(170px, 22svh, 230px);
+  --bottom-panel-height: clamp(170px, 22svh, 230px);
+  --scan-min-top: 190px;
+  --scan-size: 100vw;
+  --scan-top: max(var(--scan-min-top), calc(100svh - var(--scan-size) - var(--bottom-panel-height)));
+  --scan-bottom: calc(100svh - var(--scan-top) - var(--scan-size));
 }
 
 * {
@@ -202,7 +205,7 @@ button {
 
 .bottom-panel {
   bottom: 0;
-  height: var(--scan-bottom);
+  height: max(var(--bottom-panel-height), var(--scan-bottom));
 }
 
 #status_panel {
@@ -280,6 +283,29 @@ button {
 
 .crosshairs.active_xhairs {
   border-color: var(--neon-cyan) !important;
+}
+
+.camera-start {
+  position: fixed;
+  top: calc(var(--scan-top) + (var(--scan-size) / 2) - 24px);
+  left: 50%;
+  z-index: 5;
+  min-width: 168px;
+  min-height: 48px;
+  padding: 0 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 210, 74, .78);
+  border-radius: 5px;
+  background: rgba(7, 18, 16, .9);
+  color: var(--neon-gold);
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(255, 210, 74, .18);
+  pointer-events: auto;
+}
+
+.camera-start[hidden] {
+  display: none;
 }
 
 #nav-container,

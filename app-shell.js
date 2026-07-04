@@ -226,6 +226,70 @@
     });
   }
 
+  function videoLooksLive(video) {
+    return Boolean(
+      video &&
+      video.srcObject &&
+      video.readyState >= 2 &&
+      !video.paused &&
+      video.videoWidth > 0 &&
+      video.videoHeight > 0
+    );
+  }
+
+  function syncCameraStartButton() {
+    const button = $('camera_start');
+    const video = $('video');
+    if (!button || !video || state.pendingFile) {
+      return;
+    }
+
+    const live = videoLooksLive(video);
+    button.hidden = live;
+    if (live) {
+      if ($('status_panel').textContent === '点击画面开启摄像头。' || $('status_panel').textContent === '正在开启摄像头...') {
+        setStatus(text.idle, false);
+      }
+      return;
+    }
+
+    if ($('receive_progress_panel').hidden && !$('errorbox').textContent) {
+      setStatus('点击画面开启摄像头。', false);
+    }
+  }
+
+  function tryStartCameraFromGesture() {
+    const video = $('video');
+    setStatus('正在开启摄像头...', false);
+
+    if (window.ZheDianKuaiChuanStartCamera) {
+      window.ZheDianKuaiChuanStartCamera(true);
+    }
+    if (video && video.play) {
+      const playPromise = video.play();
+      if (playPromise && playPromise.catch) {
+        playPromise.catch(function () {});
+      }
+    }
+
+    setTimeout(syncCameraStartButton, 800);
+  }
+
+  function bindCameraStart() {
+    const button = $('camera_start');
+    const video = $('video');
+    if (!button || !video) {
+      return;
+    }
+
+    button.addEventListener('click', tryStartCameraFromGesture);
+    video.addEventListener('playing', syncCameraStartButton);
+    video.addEventListener('loadeddata', syncCameraStartButton);
+    video.addEventListener('canplay', syncCameraStartButton);
+
+    setTimeout(syncCameraStartButton, 1800);
+  }
+
   function showDeferredToast() {
     const message = sessionStorage.getItem('zdkc-toast');
     if (!message) {
@@ -238,6 +302,7 @@
   patchRecv();
   patchZstd();
   bindUi();
+  bindCameraStart();
   setStatus(text.idle, false);
   showDeferredToast();
 
