@@ -1,5 +1,5 @@
 
-var _cacheName = 'zhediankuaichuan-recv-root-v0.6.6-zd15d-42-square-height-camera1';
+var _cacheName = 'zhediankuaichuan-recv-root-v0.6.6-zd15d-42-camera-cover1';
 var _cacheFiles = [
   '/',
   '/app-shell.css',

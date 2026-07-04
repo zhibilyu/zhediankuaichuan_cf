@@ -237,6 +237,35 @@
     );
   }
 
+  function fitCameraToScanFrame() {
+    const container = $('container');
+    const video = $('video');
+    if (!container || !video) {
+      return;
+    }
+
+    const box = container.getBoundingClientRect();
+    if (!box.width || !box.height) {
+      return;
+    }
+
+    const sourceWidth = video.videoWidth || box.width;
+    const sourceHeight = video.videoHeight || box.height;
+    const sourceRatio = sourceWidth / sourceHeight;
+    const boxRatio = box.width / box.height;
+    let coverWidth = box.width;
+    let coverHeight = box.height;
+
+    if (sourceRatio > boxRatio) {
+      coverWidth = box.height * sourceRatio;
+    } else {
+      coverHeight = box.width / sourceRatio;
+    }
+
+    video.style.setProperty('--camera-cover-width', `${Math.ceil(coverWidth)}px`);
+    video.style.setProperty('--camera-cover-height', `${Math.ceil(coverHeight)}px`);
+  }
+
   function syncCameraStartButton() {
     const button = $('camera_start');
     const video = $('video');
@@ -245,6 +274,7 @@
     }
 
     const live = videoLooksLive(video);
+    fitCameraToScanFrame();
     button.hidden = live;
     if (live) {
       if ($('status_panel').textContent === '点击画面开启摄像头。' || $('status_panel').textContent === '正在开启摄像头...') {
@@ -253,7 +283,7 @@
       return;
     }
 
-    if ($('receive_progress_panel').hidden && !$('errorbox').textContent) {
+    if ($('receive_progress_panel').hidden) {
       setStatus('点击画面开启摄像头。', false);
     }
   }
@@ -283,9 +313,12 @@
     }
 
     button.addEventListener('click', tryStartCameraFromGesture);
+    video.addEventListener('loadedmetadata', fitCameraToScanFrame);
     video.addEventListener('playing', syncCameraStartButton);
     video.addEventListener('loadeddata', syncCameraStartButton);
     video.addEventListener('canplay', syncCameraStartButton);
+    window.addEventListener('resize', fitCameraToScanFrame);
+    window.addEventListener('orientationchange', fitCameraToScanFrame);
 
     setTimeout(syncCameraStartButton, 1800);
   }

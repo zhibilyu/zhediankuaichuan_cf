@@ -188,6 +188,10 @@ if (fs.existsSync(shellCssPath)) {
     '--scan-bottom:',
     '--scan-size: 100vw',
     '--bottom-panel-height:',
+    'height: var(--scan-size);',
+    'width: var(--camera-cover-width, 100%);',
+    'height: var(--camera-cover-height, 100%);',
+    'object-fit: cover !important',
     'top: var(--scan-top) !important',
     'bottom: var(--scan-bottom) !important',
     'right: 0 !important',
@@ -205,6 +209,23 @@ if (fs.existsSync(shellCssPath)) {
   }
   if (css.includes('--scan-frame-left') || css.includes('--scan-frame-size')) {
     errors.push('app-shell.css must not use the centered scan-frame layout; the scan frame should stay full-width');
+  }
+}
+
+const shellJsPath = path.join(root, 'app-shell.js');
+if (fs.existsSync(shellJsPath)) {
+  const js = fs.readFileSync(shellJsPath, 'utf8');
+  const jsExpectations = [
+    'function fitCameraToScanFrame()',
+    "video.style.setProperty('--camera-cover-width'",
+    "video.style.setProperty('--camera-cover-height'",
+    "window.addEventListener('resize', fitCameraToScanFrame)",
+  ];
+
+  for (const expected of jsExpectations) {
+    if (!js.includes(expected)) {
+      errors.push(`app-shell.js must force the camera preview to cover the scan frame: ${expected}`);
+    }
   }
 }
 

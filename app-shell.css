@@ -38,17 +38,29 @@ button {
 
 #container {
   position: fixed;
-  inset: 0;
+  top: var(--scan-top);
+  right: 0;
+  bottom: auto;
+  left: 0;
   z-index: 0;
+  height: var(--scan-size);
   overflow: hidden;
   background: #000;
 }
 
 #video {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--camera-cover-width, 100%);
+  height: var(--camera-cover-height, 100%);
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  max-height: none;
   display: block;
-  object-fit: cover;
+  transform: translate(-50%, -50%);
+  object-fit: cover !important;
   background: #000;
 }
 
