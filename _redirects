@@ -1,0 +1,5 @@
+/send /index.html 200
+/encoder /index.html 200
+/recv /recv.html 200
+/receive /recv.html 200
+/receiver /recv.html 200
