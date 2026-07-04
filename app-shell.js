@@ -11,7 +11,7 @@
     usageTitle: '使用说明',
     usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或转发到微信。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260704-235547-canvas1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
     shareWechat: '转发到微信',
     close: '确定',
@@ -22,7 +22,8 @@
   const state = {
     pendingFile: null,
     nativeDownload: null,
-    toastTimer: 0
+    toastTimer: 0,
+    cameraCanvasRunning: false
   };
 
   function $(id) {
@@ -237,10 +238,10 @@
     );
   }
 
-  function fitCameraToScanFrame() {
+  function resizeCameraCanvas() {
     const container = $('container');
-    const video = $('video');
-    if (!container || !video) {
+    const canvas = $('camera_canvas');
+    if (!container || !canvas) {
       return;
     }
 
@@ -249,21 +250,50 @@
       return;
     }
 
-    const sourceWidth = video.videoWidth || box.width;
-    const sourceHeight = video.videoHeight || box.height;
-    const sourceRatio = sourceWidth / sourceHeight;
-    const boxRatio = box.width / box.height;
-    let coverWidth = box.width;
-    let coverHeight = box.height;
+    const pixelRatio = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+    const width = Math.round(box.width * pixelRatio);
+    const height = Math.round(box.height * pixelRatio);
 
-    if (sourceRatio > boxRatio) {
-      coverWidth = box.height * sourceRatio;
-    } else {
-      coverHeight = box.width / sourceRatio;
+    canvas.style.width = `${box.width}px`;
+    canvas.style.height = `${box.height}px`;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+  }
+
+  function drawCameraCanvasFrame() {
+    const video = $('video');
+    const canvas = $('camera_canvas');
+    if (!video || !canvas) {
+      state.cameraCanvasRunning = false;
+      return;
     }
 
-    video.style.setProperty('--camera-cover-width', `${Math.ceil(coverWidth)}px`);
-    video.style.setProperty('--camera-cover-height', `${Math.ceil(coverHeight)}px`);
+    resizeCameraCanvas();
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (vw > 0 && vh > 0 && canvas.width > 0 && canvas.height > 0) {
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const scale = Math.max(canvas.width / vw, canvas.height / vh);
+      const sw = canvas.width / scale;
+      const sh = canvas.height / scale;
+      const sx = Math.max(0, (vw - sw) / 2);
+      const sy = Math.max(0, (vh - sh) / 2);
+
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    }
+
+    requestAnimationFrame(drawCameraCanvasFrame);
+  }
+
+  function startCameraCanvasPreview() {
+    if (state.cameraCanvasRunning) {
+      return;
+    }
+    state.cameraCanvasRunning = true;
+    drawCameraCanvasFrame();
   }
 
   function syncCameraStartButton() {
@@ -274,9 +304,10 @@
     }
 
     const live = videoLooksLive(video);
-    fitCameraToScanFrame();
+    resizeCameraCanvas();
     button.hidden = live;
     if (live) {
+      startCameraCanvasPreview();
       if ($('status_panel').textContent === '点击画面开启摄像头。' || $('status_panel').textContent === '正在开启摄像头...') {
         setStatus(text.idle, false);
       }
@@ -313,12 +344,15 @@
     }
 
     button.addEventListener('click', tryStartCameraFromGesture);
-    video.addEventListener('loadedmetadata', fitCameraToScanFrame);
+    video.addEventListener('loadedmetadata', resizeCameraCanvas);
+    video.addEventListener('loadedmetadata', startCameraCanvasPreview);
     video.addEventListener('playing', syncCameraStartButton);
+    video.addEventListener('playing', startCameraCanvasPreview);
     video.addEventListener('loadeddata', syncCameraStartButton);
+    video.addEventListener('loadeddata', startCameraCanvasPreview);
     video.addEventListener('canplay', syncCameraStartButton);
-    window.addEventListener('resize', fitCameraToScanFrame);
-    window.addEventListener('orientationchange', fitCameraToScanFrame);
+    window.addEventListener('resize', resizeCameraCanvas);
+    window.addEventListener('orientationchange', resizeCameraCanvas);
 
     setTimeout(syncCameraStartButton, 1800);
   }

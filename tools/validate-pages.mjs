@@ -26,6 +26,7 @@ const mobileReceiverExpectations = [
   'app-shell.js',
   'id="zdkc-app"',
   'id="app_title"',
+  'id="camera_canvas"',
   'id="menu_reset"',
   'id="menu_usage"',
   'id="menu_about"',
@@ -97,6 +98,26 @@ function collectRefs(file, content) {
 }
 
 const errors = [];
+
+function coverCrop(sourceWidth, sourceHeight, targetWidth, targetHeight) {
+  const scale = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
+  return {
+    sw: targetWidth / scale,
+    sh: targetHeight / scale,
+    sx: Math.max(0, (sourceWidth - targetWidth / scale) / 2),
+    sy: Math.max(0, (sourceHeight - targetHeight / scale) / 2),
+  };
+}
+
+const landscapeToSquare = coverCrop(1920, 1080, 430, 430);
+if (
+  Math.round(landscapeToSquare.sw) !== 1080 ||
+  Math.round(landscapeToSquare.sh) !== 1080 ||
+  Math.round(landscapeToSquare.sx) !== 420 ||
+  Math.round(landscapeToSquare.sy) !== 0
+) {
+  errors.push('canvas preview cover crop must crop the left/right sides of a landscape camera stream when drawn into the square scan frame');
+}
 
 for (const required of requiredFiles) {
   if (!fs.existsSync(path.join(root, required))) {
@@ -189,9 +210,9 @@ if (fs.existsSync(shellCssPath)) {
     '--scan-size: 100vw',
     '--bottom-panel-height:',
     'height: var(--scan-size);',
-    'width: var(--camera-cover-width, 100%);',
-    'height: var(--camera-cover-height, 100%);',
-    'object-fit: cover !important',
+    '#camera_canvas',
+    'inset: 0;',
+    'opacity: 0;',
     'top: var(--scan-top) !important',
     'bottom: var(--scan-bottom) !important',
     'right: 0 !important',
@@ -216,15 +237,17 @@ const shellJsPath = path.join(root, 'app-shell.js');
 if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
-    'function fitCameraToScanFrame()',
-    "video.style.setProperty('--camera-cover-width'",
-    "video.style.setProperty('--camera-cover-height'",
-    "window.addEventListener('resize', fitCameraToScanFrame)",
+    '页面版本：20260704-235547-canvas1',
+    'function resizeCameraCanvas()',
+    'function drawCameraCanvasFrame()',
+    'const scale = Math.max(canvas.width / vw, canvas.height / vh)',
+    'ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)',
+    'requestAnimationFrame(drawCameraCanvasFrame)',
   ];
 
   for (const expected of jsExpectations) {
     if (!js.includes(expected)) {
-      errors.push(`app-shell.js must force the camera preview to cover the scan frame: ${expected}`);
+      errors.push(`app-shell.js must render a full-height canvas camera preview and expose the page version: ${expected}`);
     }
   }
 }
