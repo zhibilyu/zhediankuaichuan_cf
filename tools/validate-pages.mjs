@@ -229,6 +229,23 @@ if (fs.existsSync(shellJsPath)) {
   }
 }
 
+const recvRuntimePath = path.join(root, 'recv.2026-05-09T0146.js');
+if (fs.existsSync(recvRuntimePath)) {
+  const recvRuntime = fs.readFileSync(recvRuntimePath, 'utf8');
+  const recvExpectations = [
+    "const isPortrait = matchMedia('all and (orientation:portrait)').matches",
+    'const idealWidth = isPortrait ? 1080 : 1920',
+    'const idealHeight = isPortrait ? 1920 : 1080',
+    'aspectRatio: isPortrait ? 9 / 16 : 16 / 9',
+  ];
+
+  for (const expected of recvExpectations) {
+    if (!recvRuntime.includes(expected)) {
+      errors.push(`recv runtime must request a portrait camera stream on phones: ${expected}`);
+    }
+  }
+}
+
 for (const swName of ['recv-sw.js', 'sw.js']) {
   const swPath = path.join(root, swName);
   if (fs.existsSync(swPath)) {

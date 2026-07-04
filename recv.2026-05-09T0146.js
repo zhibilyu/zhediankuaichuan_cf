@@ -224,12 +224,16 @@ var Recv = function () {
       _video = video;
       window.addEventListener('resize', _updateCrosshairPositions);
 
+      const isPortrait = matchMedia('all and (orientation:portrait)').matches;
+      const idealWidth = isPortrait ? 1080 : 1920;
+      const idealHeight = isPortrait ? 1920 : 1080;
+
       var constraints = {
         audio: false,
         video: {
-          width: { min: 720, ideal: 1920 }, // Request HD but allow flexibility
-          height: { min: 720, ideal: 1080 },
-          aspectRatio: matchMedia('all and (orientation:landscape)').matches ? 16 / 9 : 9 / 16,
+          width: { min: 720, ideal: idealWidth }, // Request HD but keep portrait phones portrait.
+          height: { min: 720, ideal: idealHeight },
+          aspectRatio: isPortrait ? 9 / 16 : 16 / 9,
           facingMode: 'environment',
           exposureMode: 'continuous',
           focusMode: 'continuous',
