@@ -17,6 +17,14 @@ const requiredFiles = [
   'sw.js',
 ];
 
+const decoderRootExpectations = [
+  '<title>Cimbar Decoder</title>',
+  'pwa-recv.2026-05-09T0146.json',
+  "navigator.serviceWorker.register('./recv-sw.js')",
+  'recv.2026-05-09T0146.js',
+  'zstd.2026-05-09T0146.js',
+];
+
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(dir, entry.name);
@@ -110,6 +118,19 @@ if (fs.existsSync(headersPath)) {
   }
   if (!headers.includes('Service-Worker-Allowed: /')) {
     errors.push('_headers must allow root-scoped service workers');
+  }
+}
+
+const indexPath = path.join(root, 'index.html');
+if (fs.existsSync(indexPath)) {
+  const index = fs.readFileSync(indexPath, 'utf8');
+  for (const expected of decoderRootExpectations) {
+    if (!index.includes(expected)) {
+      errors.push(`index.html must be the decoder entry and include: ${expected}`);
+    }
+  }
+  if (index.includes('<title>Cimbar Encoder</title>')) {
+    errors.push('index.html must not be the encoder entry');
   }
 }
 

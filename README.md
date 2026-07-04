@@ -1,20 +1,35 @@
-# libcimbar for Cloudflare Pages
+# libcimbar Receiver for Cloudflare Pages
 
-This directory is a self-contained Cloudflare Pages deployment for the libcimbar web app.
+This repository deploys the libcimbar web decoder to Cloudflare Pages. It is intended to behave like `re.cimbar.org`, which redirects to the upstream receiver page at `https://cimbar.org/recv.html`.
 
-It serves the browser encoder at `/` and the browser receiver at `/recv.html`.
+The root route `/` serves the receiver UI directly.
 
-## Contents
+## Source
 
-- Static runtime files are from the `sz3/libcimbar` GitHub release `v0.6.5`.
-- Release asset: `cimbar.wasm.tar.gz`
+- Receiver source: `sz3/libcimbar` release `v0.6.5`, asset `cimbar.wasm.tar.gz`
 - Release asset SHA-256: `639163eb6083235553f1a69f0ca45a1d43df37d5aca09ec5814fca806a0d9993`
-- Icons are copied from the repository `web/` directory.
-- `icon-512x512-maskable.png` is copied from `icon-512x512.png` to satisfy the receiver PWA manifest and service worker cache list.
+- Receiver entry copied to both `index.html` and `recv.html`
+- Runtime version marker: `2026-05-09T0146`
+
+The issue that motivated this deployment is:
+
+```text
+https://github.com/sz3/libcimbar/issues/170
+```
+
+That issue confirms the iPhone-compatible browser decoder is the receiver page, not the encoder page.
 
 ## Cloudflare Pages Settings
 
-Use this directory as the Pages project root:
+For this standalone repository:
+
+```text
+Framework preset: None
+Build command: npm run validate
+Build output directory: .
+```
+
+If this directory is nested under another repository, set:
 
 ```text
 Root directory: cloudflare
@@ -22,21 +37,11 @@ Build command: npm run validate
 Build output directory: .
 ```
 
-If the Pages project root remains the repository root, use:
-
-```text
-Build command: cd cloudflare && npm run validate
-Build output directory: cloudflare
-```
-
 ## Routes
 
-- Sender: `/`
-- Sender alias: `/send`
-- Receiver: `/recv.html`
-- Receiver aliases: `/recv`, `/receive`, `/receiver`
-
-The route aliases are configured in `_redirects`.
+- Decoder root: `/`
+- Decoder aliases: `/recv`, `/receive`, `/receiver`
+- Legacy encoder aliases: `/send`, `/encoder` redirect back to `/`
 
 ## Validation
 
@@ -46,7 +51,11 @@ Run this before deploying:
 npm run validate
 ```
 
-The validation script checks that local HTML, JavaScript, manifest, service worker, icon, and WASM references resolve inside this directory. It also checks that `_headers` serves WASM as `application/wasm`.
+The validation script checks that:
+
+- local HTML, JavaScript, manifest, service worker, icon, and WASM references resolve
+- `_headers` serves WASM as `application/wasm`
+- `index.html` is the decoder entry, not the encoder entry
 
 ## Direct Deploy With Wrangler
 
@@ -57,6 +66,6 @@ npx wrangler pages deploy . --project-name libcimbar
 
 ## Notes
 
-Deploy this site at the domain root. The service workers and PWA manifests use root-scoped paths.
+Deploy this site at the domain root. The receiver uses root-scoped service workers and PWA manifests.
 
-Cloudflare Pages provides HTTPS by default, which is required for camera access on the receiver page.
+Cloudflare Pages provides HTTPS by default, which is required for browser camera access.

@@ -1,15 +1,19 @@
 
-var _cacheName = 'cimbar-js-v2026-05-09T0146';
+var _cacheName = 'cimbar-recv-js-root-v2026-05-09T0146';
 var _cacheFiles = [
   '/',
   '/index.html',
+  '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',
   '/cimbar_js.2026-05-09T0146.wasm',
   '/favicon.ico',
   '/icon-192x192.png',
   '/icon-512x512.png',
-  '/main.2026-05-09T0146.js',
-  '/pwa.2026-05-09T0146.json'
+  '/icon-512x512-maskable.png',
+  '/recv.2026-05-09T0146.js',
+  '/recv-worker.2026-05-09T0146.js',
+  '/pwa-recv.2026-05-09T0146.json',
+  '/zstd.2026-05-09T0146.js'
 ];
 
 // fetch files

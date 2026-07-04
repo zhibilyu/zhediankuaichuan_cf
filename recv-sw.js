@@ -2,6 +2,7 @@
 var _cacheName = 'cimbar-recv-js-v2026-05-09T0146';
 var _cacheFiles = [
   '/',
+  '/index.html',
   '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',
   '/cimbar_js.2026-05-09T0146.wasm',
