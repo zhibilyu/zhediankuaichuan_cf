@@ -1,9 +1,9 @@
 
-var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-smartcrop1';
+var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-cachebust1';
 var _cacheFiles = [
   '/',
-  '/app-shell.css',
-  '/app-shell.js',
+  '/app-shell.css?v=20260705-130755-cachebust1',
+  '/app-shell.js?v=20260705-130755-cachebust1',
   '/index.html',
   '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',

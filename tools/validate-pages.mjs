@@ -22,8 +22,8 @@ const requiredFiles = [
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
   '<title>浙电快传</title>',
-  'app-shell.css',
-  'app-shell.js',
+  'app-shell.css?v=20260705-130755-cachebust1',
+  'app-shell.js?v=20260705-130755-cachebust1',
   'id="zdkc-app"',
   'id="app_title"',
   'id="camera_canvas"',
@@ -36,14 +36,14 @@ const mobileReceiverExpectations = [
   '对准动态码开始接收。',
   'ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
   'pwa-recv.2026-05-09T0146.json',
-  "navigator.serviceWorker.register('./recv-sw.js')",
+  "navigator.serviceWorker.register('./recv-sw.js?v=20260705-130755-cachebust1')",
   'recv.2026-05-09T0146.js',
   'zstd.2026-05-09T0146.js',
 ];
 
 const shellFiles = [
-  '/app-shell.css',
-  '/app-shell.js',
+  '/app-shell.css?v=20260705-130755-cachebust1',
+  '/app-shell.js?v=20260705-130755-cachebust1',
 ];
 
 function walk(dir) {
@@ -160,6 +160,9 @@ if (fs.existsSync(headersPath)) {
   if (!headers.includes('Service-Worker-Allowed: /')) {
     errors.push('_headers must allow root-scoped service workers');
   }
+  if (!headers.includes('/app-shell.css') || !headers.includes('/app-shell.js') || !headers.includes('Cache-Control: no-cache')) {
+    errors.push('_headers must keep app-shell.css and app-shell.js out of immutable browser cache');
+  }
 }
 
 const indexPath = path.join(root, 'index.html');
@@ -237,7 +240,7 @@ const shellJsPath = path.join(root, 'app-shell.js');
 if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
-    '页面版本：20260705-125217-smartcrop1',
+    '页面版本：20260705-130755-cachebust1',
     'function resizeCameraCanvas()',
     'function detectActiveVideoBounds(video)',
     'function getCoverCrop(source, targetWidth, targetHeight)',
