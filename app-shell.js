@@ -11,7 +11,7 @@
     usageTitle: '使用说明',
     usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或转发到微信。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260704-235547-canvas1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260705-125217-smartcrop1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
     shareWechat: '转发到微信',
     close: '确定',
@@ -23,7 +23,10 @@
     pendingFile: null,
     nativeDownload: null,
     toastTimer: 0,
-    cameraCanvasRunning: false
+    cameraCanvasRunning: false,
+    cameraCanvasFrame: 0,
+    activeVideoBounds: null,
+    sampleCanvas: null
   };
 
   function $(id) {
@@ -262,6 +265,93 @@
     }
   }
 
+  function detectActiveVideoBounds(video) {
+    const sourceWidth = video.videoWidth;
+    const sourceHeight = video.videoHeight;
+    if (!sourceWidth || !sourceHeight) {
+      return null;
+    }
+
+    const sampleMax = 128;
+    const sampleScale = Math.min(1, sampleMax / Math.max(sourceWidth, sourceHeight));
+    const sampleWidth = Math.max(1, Math.round(sourceWidth * sampleScale));
+    const sampleHeight = Math.max(1, Math.round(sourceHeight * sampleScale));
+    const sampleCanvas = state.sampleCanvas || document.createElement('canvas');
+    state.sampleCanvas = sampleCanvas;
+    sampleCanvas.width = sampleWidth;
+    sampleCanvas.height = sampleHeight;
+
+    const ctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) {
+      return null;
+    }
+
+    try {
+      ctx.drawImage(video, 0, 0, sampleWidth, sampleHeight);
+      const pixels = ctx.getImageData(0, 0, sampleWidth, sampleHeight).data;
+      let minX = sampleWidth;
+      let minY = sampleHeight;
+      let maxX = -1;
+      let maxY = -1;
+      let activePixels = 0;
+
+      for (let y = 0; y < sampleHeight; y += 1) {
+        for (let x = 0; x < sampleWidth; x += 1) {
+          const index = (y * sampleWidth + x) * 4;
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const brightness = red + green + blue;
+
+          if (brightness > 42) {
+            activePixels += 1;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+
+      if (activePixels < sampleWidth * sampleHeight * 0.015 || maxX < minX || maxY < minY) {
+        return { sx: 0, sy: 0, sw: sourceWidth, sh: sourceHeight };
+      }
+
+      const padX = Math.max(1, Math.round(sampleWidth * 0.02));
+      const padY = Math.max(1, Math.round(sampleHeight * 0.02));
+      minX = Math.max(0, minX - padX);
+      minY = Math.max(0, minY - padY);
+      maxX = Math.min(sampleWidth - 1, maxX + padX);
+      maxY = Math.min(sampleHeight - 1, maxY + padY);
+
+      return {
+        sx: minX / sampleScale,
+        sy: minY / sampleScale,
+        sw: (maxX - minX + 1) / sampleScale,
+        sh: (maxY - minY + 1) / sampleScale
+      };
+    } catch (error) {
+      return { sx: 0, sy: 0, sw: sourceWidth, sh: sourceHeight };
+    }
+  }
+
+  function getCoverCrop(source, targetWidth, targetHeight) {
+    if (!source || !source.sw || !source.sh || !targetWidth || !targetHeight) {
+      return source;
+    }
+
+    const scale = Math.max(targetWidth / source.sw, targetHeight / source.sh);
+    const cropWidth = targetWidth / scale;
+    const cropHeight = targetHeight / scale;
+
+    return {
+      sx: source.sx + Math.max(0, (source.sw - cropWidth) / 2),
+      sy: source.sy + Math.max(0, (source.sh - cropHeight) / 2),
+      sw: cropWidth,
+      sh: cropHeight
+    };
+  }
+
   function drawCameraCanvasFrame() {
     const video = $('video');
     const canvas = $('camera_canvas');
@@ -276,13 +366,17 @@
     const vh = video.videoHeight;
     if (vw > 0 && vh > 0 && canvas.width > 0 && canvas.height > 0) {
       const ctx = canvas.getContext('2d', { alpha: false });
-      const scale = Math.max(canvas.width / vw, canvas.height / vh);
-      const sw = canvas.width / scale;
-      const sh = canvas.height / scale;
-      const sx = Math.max(0, (vw - sw) / 2);
-      const sy = Math.max(0, (vh - sh) / 2);
+      if (ctx) {
+        state.cameraCanvasFrame += 1;
+        if (!state.activeVideoBounds || state.cameraCanvasFrame % 12 === 1) {
+          const activeBounds = detectActiveVideoBounds(video);
+          state.activeVideoBounds = activeBounds || { sx: 0, sy: 0, sw: vw, sh: vh };
+        }
+        const activeBounds = state.activeVideoBounds;
+        const crop = getCoverCrop(activeBounds, canvas.width, canvas.height);
 
-      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height);
+      }
     }
 
     requestAnimationFrame(drawCameraCanvasFrame);

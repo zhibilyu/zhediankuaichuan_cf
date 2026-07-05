@@ -237,11 +237,15 @@ const shellJsPath = path.join(root, 'app-shell.js');
 if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
-    '页面版本：20260704-235547-canvas1',
+    '页面版本：20260705-125217-smartcrop1',
     'function resizeCameraCanvas()',
+    'function detectActiveVideoBounds(video)',
+    'function getCoverCrop(source, targetWidth, targetHeight)',
     'function drawCameraCanvasFrame()',
-    'const scale = Math.max(canvas.width / vw, canvas.height / vh)',
-    'ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)',
+    "getImageData(0, 0, sampleWidth, sampleHeight)",
+    'const activeBounds = detectActiveVideoBounds(video)',
+    'const crop = getCoverCrop(activeBounds, canvas.width, canvas.height)',
+    'ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height)',
     'requestAnimationFrame(drawCameraCanvasFrame)',
   ];
 
