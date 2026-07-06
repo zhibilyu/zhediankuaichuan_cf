@@ -108,6 +108,8 @@ var Recv = function () {
   var _workerReady;
   var _framesInFlight = 0;
   var _supportedFormats = ["NV12", "I420"]; // have cimbard_* return this somehow?
+  var _decodeCanvas = document.createElement("canvas");
+  var _decodeSize = 1024;
 
   var _mode = 0;
 
@@ -176,6 +178,61 @@ var Recv = function () {
     xh1.style.right = offsetX + "px";
     xh2.style.bottom = offsetY + "px";
     xh2.style.left = offsetX + "px";
+  }
+
+  function _copyDecodeCanvasFrame() {
+    const canvas = document.getElementById("camera_canvas");
+    if (!canvas || !canvas.classList.contains("is-live") || canvas.width <= 0 || canvas.height <= 0) {
+      return null;
+    }
+
+    _decodeCanvas.width = _decodeSize;
+    _decodeCanvas.height = _decodeSize;
+
+    const ctx = _decodeCanvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return null;
+    }
+
+    ctx.drawImage(canvas, 0, 0, _decodeSize, _decodeSize);
+    const image = ctx.getImageData(0, 0, _decodeSize, _decodeSize);
+    const rgba = image.data;
+    const rgb = new Uint8Array(_decodeSize * _decodeSize * 3);
+    for (let source = 0, target = 0; source < rgba.length; source += 4, target += 3) {
+      rgb[target] = rgba[source];
+      rgb[target + 1] = rgba[source + 1];
+      rgb[target + 2] = rgba[source + 2];
+    }
+
+    return {
+      pixels: rgb,
+      format: "RGB",
+      width: _decodeSize,
+      height: _decodeSize
+    };
+  }
+
+  function _copyVideoFrame(now) {
+    const vf = new VideoFrame(_video, { timestamp: now });
+    const width = vf.displayWidth;
+    const height = vf.displayHeight;
+    Recv.set_HTML("errorbox", vf.format, true);
+
+    let vfparams = {};
+    if (!_supportedFormats.includes(vf.format)) {
+      vfparams.format = "RGBA";
+    }
+    const size = vf.allocationSize(vfparams);
+    const pixels = new Uint8Array(size);
+    vf.copyTo(pixels, vfparams);
+
+    let format = vfparams.format || vf.format;
+    if (format == "RGBA" && size != width * height * 4) {
+      format = vf.format;
+    }
+    vf.close();
+
+    return { pixels, format, width, height };
   }
 
   // public interface
@@ -347,48 +404,29 @@ var Recv = function () {
       // make sure the camera feed stays up
       Recv.watch_for_camera_pause();
 
-      const modeVals = [66, 68, 67, 4];
+      // Match the Android receiver auto mode: alternate 4C and B instead of
+      // diluting useful frames across legacy Bu/Bm modes.
+      const modeVals = [4, 68];
 
-      var vf = undefined;
       if (_framesInFlight > 20) {
         console.log("stalling, worker queues are full");
       }
       else {
         Recv.frames_in_flight_incr();
         try {
-          vf = new VideoFrame(_video, { timestamp: now });
-          const width = vf.displayWidth;
-          const height = vf.displayHeight;
-          Recv.set_HTML("errorbox", vf.format, true);
-
-          // try to use the default format, but only if we can decode it...
-          let vfparams = {};
-          if (!_supportedFormats.includes(vf.format)) {
-            vfparams.format = "RGBA";
-          }
-          const size = vf.allocationSize(vfparams);
-          const buff = new Uint8Array(size);
-          vf.copyTo(buff, vfparams);
-
-          let format = vfparams.format || vf.format;
-          if (format == "RGBA" && size != width * height * 4) {
-            format = vf.format; //fallback
-          }
+          const frame = _copyDecodeCanvasFrame() || _copyVideoFrame(now);
           if (_captureNextFrame == 1) {
             _captureNextFrame = 0;
-            Recv.download_bytes(buff, width + "x" + height + "x" + _counter + "." + format);
+            Recv.download_bytes(frame.pixels, frame.width + "x" + frame.height + "x" + _counter + "." + frame.format);
           }
 
           let mode = _mode || modeVals[_counter % modeVals.length];
-          _workers[_nextWorker].postMessage({ type: 'proc', pixels: buff, format: format, width: width, height: height, mode: mode }, [buff.buffer]);
+          _workers[_nextWorker].postMessage({ type: 'proc', pixels: frame.pixels, format: frame.format, width: frame.width, height: frame.height, mode: mode }, [frame.pixels.buffer]);
         } catch (e) {
           console.log(e);
         }
         _nextWorker += 1;
       }
-      if (vf)
-        vf.close();
-
       // schedule the next one
       _video.requestVideoFrameCallback(Recv.on_frame);
     },
@@ -407,25 +445,30 @@ var Recv = function () {
       _updateCrosshairPositions();
 
       // check counters
-      var xh1 = document.getElementById("crosshair1");
-      var xh2 = document.getElementById("crosshair2");
+      var xhairs = [
+        document.getElementById("crosshair1"),
+        document.getElementById("crosshair2"),
+        document.getElementById("crosshair3"),
+        document.getElementById("crosshair4")
+      ].filter(Boolean);
+
       if (_recentDecode > 0 && _recentDecode + 30 > _counter) {
-        xh1.classList.add("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
-        xh2.classList.add("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
+        for (const xhair of xhairs) {
+          xhair.classList.add("active_xhairs");
+          xhair.classList.remove("scanning_xhairs");
+        }
       }
       else if (_recentExtract > 0 && _recentExtract + 30 > _counter) {
-        xh1.classList.add("scanning_xhairs");
-        xh1.classList.remove("active_xhairs");
-        xh2.classList.add("scanning_xhairs");
-        xh2.classList.remove("active_xhairs");
+        for (const xhair of xhairs) {
+          xhair.classList.add("scanning_xhairs");
+          xhair.classList.remove("active_xhairs");
+        }
       }
       else { // inactive
-        xh1.classList.remove("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
-        xh2.classList.remove("active_xhairs");
-        xh2.classList.remove("scanning_xhairs");
+        for (const xhair of xhairs) {
+          xhair.classList.remove("active_xhairs");
+          xhair.classList.remove("scanning_xhairs");
+        }
       }
     },
 

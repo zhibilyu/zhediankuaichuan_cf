@@ -19,7 +19,7 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260706-152522-viewportalign1';
+const pageVersion = '20260706-170341-androidauto1';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
@@ -217,6 +217,7 @@ if (fs.existsSync(shellCssPath)) {
     '--scan-corner-size:',
     '--bottom-panel-height:',
     'height: var(--scan-size);',
+    'padding: calc(env(safe-area-inset-top, 0px) + 22px) 0 0 20px;',
     'top: calc(var(--scan-top) + var(--scan-size));',
     '#camera_canvas',
     'inset: 0;',
@@ -275,6 +276,14 @@ if (fs.existsSync(recvRuntimePath)) {
     'const idealWidth = isPortrait ? 1080 : 1920',
     'const idealHeight = isPortrait ? 1920 : 1080',
     'aspectRatio: { ideal: isPortrait ? 9 / 16 : 16 / 9 }',
+    'function _copyDecodeCanvasFrame()',
+    'document.getElementById("camera_canvas")',
+    'var _decodeSize = 1024',
+    'ctx.drawImage(canvas, 0, 0, _decodeSize, _decodeSize)',
+    'const image = ctx.getImageData(0, 0, _decodeSize, _decodeSize)',
+    'const frame = _copyDecodeCanvasFrame() || _copyVideoFrame(now)',
+    'const modeVals = [4, 68]',
+    'format: "RGB"',
   ];
 
   for (const expected of recvExpectations) {

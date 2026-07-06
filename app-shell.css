@@ -102,7 +102,7 @@ button {
 .top-panel {
   top: 0;
   height: var(--scan-top);
-  padding: calc(env(safe-area-inset-top, 0px) + 54px) 0 0 20px;
+  padding: calc(env(safe-area-inset-top, 0px) + 22px) 0 0 20px;
   overflow: hidden;
 }
 
