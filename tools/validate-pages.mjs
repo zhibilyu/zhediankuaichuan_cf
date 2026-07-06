@@ -19,7 +19,7 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260706-134224-nooverlap1';
+const pageVersion = '20260706-152522-viewportalign1';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
@@ -214,13 +214,15 @@ if (fs.existsSync(shellCssPath)) {
     '--scan-top:',
     '--scan-bottom:',
     '--scan-size: 100vw',
+    '--scan-corner-size:',
     '--bottom-panel-height:',
     'height: var(--scan-size);',
+    'top: calc(var(--scan-top) + var(--scan-size));',
     '#camera_canvas',
     'inset: 0;',
     'opacity: 0;',
     'top: var(--scan-top) !important',
-    'bottom: var(--scan-bottom) !important',
+    'top: calc(var(--scan-top) + var(--scan-size) - var(--scan-corner-size)) !important',
     'right: 0 !important',
     'left: 0 !important',
   ];
@@ -247,9 +249,11 @@ if (fs.existsSync(shellJsPath)) {
     'function resizeCameraCanvas()',
     'function detectActiveVideoBounds(video)',
     'function getCoverCrop(source, targetWidth, targetHeight)',
+    'function trimLandscapeSourceInPortrait(source, video)',
     'function drawCameraCanvasFrame()',
     "getImageData(0, 0, sampleWidth, sampleHeight)",
     'const activeBounds = detectActiveVideoBounds(video)',
+    'const activeBounds = trimLandscapeSourceInPortrait(state.activeVideoBounds, video)',
     'const crop = getCoverCrop(activeBounds, canvas.width, canvas.height)',
     'ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height)',
     "canvas.classList.add('is-live')",
@@ -269,13 +273,13 @@ if (fs.existsSync(recvRuntimePath)) {
   const recvExpectations = [
     "const isPortrait = matchMedia('all and (orientation:portrait)').matches",
     'const idealWidth = isPortrait ? 1080 : 1920',
-    'const idealHeight = isPortrait ? 1080 : 1080',
-    'aspectRatio: { ideal: isPortrait ? 1 : 16 / 9 }',
+    'const idealHeight = isPortrait ? 1920 : 1080',
+    'aspectRatio: { ideal: isPortrait ? 9 / 16 : 16 / 9 }',
   ];
 
   for (const expected of recvExpectations) {
     if (!recvRuntime.includes(expected)) {
-      errors.push(`recv runtime must request a square camera stream on phones: ${expected}`);
+      errors.push(`recv runtime must request a portrait camera stream on phones and crop it in the page: ${expected}`);
     }
   }
 }

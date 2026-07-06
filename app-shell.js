@@ -11,7 +11,7 @@
     usageTitle: '使用说明',
     usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或转发到微信。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260706-134224-nooverlap1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260706-152522-viewportalign1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
     shareWechat: '转发到微信',
     close: '确定',
@@ -352,6 +352,19 @@
     };
   }
 
+  function trimLandscapeSourceInPortrait(source, video) {
+    if (!source || !video || window.innerHeight <= window.innerWidth || video.videoWidth <= video.videoHeight) {
+      return source;
+    }
+
+    return {
+      sx: source.sx,
+      sy: source.sy,
+      sw: source.sw,
+      sh: source.sh * 0.92
+    };
+  }
+
   function drawCameraCanvasFrame() {
     const video = $('video');
     const canvas = $('camera_canvas');
@@ -372,7 +385,7 @@
           const activeBounds = detectActiveVideoBounds(video);
           state.activeVideoBounds = activeBounds || { sx: 0, sy: 0, sw: vw, sh: vh };
         }
-        const activeBounds = state.activeVideoBounds;
+        const activeBounds = trimLandscapeSourceInPortrait(state.activeVideoBounds, video);
         const crop = getCoverCrop(activeBounds, canvas.width, canvas.height);
 
         try {
