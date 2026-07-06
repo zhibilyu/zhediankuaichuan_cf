@@ -19,7 +19,7 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260706-105439-squarecam1';
+const pageVersion = '20260706-134224-nooverlap1';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',

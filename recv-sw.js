@@ -1,9 +1,9 @@
 
-var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-squarecam1';
+var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-nooverlap1';
 var _cacheFiles = [
   '/',
-  '/app-shell.css?v=20260706-105439-squarecam1',
-  '/app-shell.js?v=20260706-105439-squarecam1',
+  '/app-shell.css?v=20260706-134224-nooverlap1',
+  '/app-shell.js?v=20260706-134224-nooverlap1',
   '/index.html',
   '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',
@@ -12,7 +12,7 @@ var _cacheFiles = [
   '/icon-192x192.png',
   '/icon-512x512.png',
   '/icon-512x512-maskable.png',
-  '/recv.2026-05-09T0146.js?v=20260706-105439-squarecam1',
+  '/recv.2026-05-09T0146.js?v=20260706-134224-nooverlap1',
   '/recv-worker.2026-05-09T0146.js',
   '/pwa-recv.2026-05-09T0146.json',
   '/zstd.2026-05-09T0146.js'

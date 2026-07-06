@@ -3,10 +3,10 @@
   --neon-gold: #ffd24a;
   --deep-panel: rgba(7, 18, 16, .82);
   --text-panel: #d7fff7;
-  --bottom-panel-height: clamp(170px, 22svh, 230px);
-  --scan-min-top: 190px;
+  --bottom-panel-height: clamp(118px, 20svh, 170px);
+  --scan-min-top: 126px;
   --scan-size: 100vw;
-  --scan-top: max(var(--scan-min-top), calc(100svh - var(--scan-size) - var(--bottom-panel-height)));
+  --scan-top: clamp(var(--scan-min-top), calc(100svh - var(--scan-size) - var(--bottom-panel-height)), 190px);
   --scan-bottom: calc(100svh - var(--scan-top) - var(--scan-size));
 }
 
@@ -242,9 +242,9 @@ button {
   position: absolute;
   left: 20px;
   right: 20px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 52px);
-  min-height: 56px;
-  padding: 14px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(34px, 6svh, 52px));
+  min-height: clamp(48px, 8svh, 56px);
+  padding: 10px 14px;
   border: 1px solid rgba(79, 255, 225, .54);
   border-radius: 5px;
   background: var(--deep-panel);
@@ -264,7 +264,7 @@ button {
   position: absolute;
   left: 36px;
   right: 36px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(16px, 3.5svh, 28px));
   height: 2px;
   background: var(--neon-gold);
   box-shadow: 0 0 10px rgba(255, 210, 74, .25);
