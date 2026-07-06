@@ -51,14 +51,16 @@ button {
 #video {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  z-index: 0;
+  width: 100% !important;
+  height: 100% !important;
   min-width: 100%;
   min-height: 100%;
   max-width: none;
   max-height: none;
   display: block;
-  opacity: 0;
+  object-fit: cover !important;
+  opacity: 1;
   pointer-events: none;
   transform: none;
   background: #000;
@@ -67,10 +69,17 @@ button {
 #camera_canvas {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  z-index: 1;
+  width: 100% !important;
+  height: 100% !important;
   display: block;
-  background: #000;
+  opacity: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+#camera_canvas.is-live {
+  opacity: 1;
 }
 
 #zdkc-app {

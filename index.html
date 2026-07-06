@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#020706">
   <meta name="zdkc-apk" content="ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk">
   <link rel="manifest" href="pwa-recv.2026-05-09T0146.json">
-  <link rel="stylesheet" href="app-shell.css?v=20260705-130755-cachebust1">
+  <link rel="stylesheet" href="app-shell.css?v=20260706-105439-squarecam1">
 </head>
 
 <body>
@@ -76,14 +76,14 @@
 
   <div id="app_toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="recv.2026-05-09T0146.js"></script>
+  <script src="recv.2026-05-09T0146.js?v=20260706-105439-squarecam1"></script>
   <script src="zstd.2026-05-09T0146.js"></script>
-  <script src="app-shell.js?v=20260705-130755-cachebust1"></script>
+  <script src="app-shell.js?v=20260706-105439-squarecam1"></script>
 
   <script>
     Recv.init_ww(4);
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./recv-sw.js?v=20260705-130755-cachebust1');
+      navigator.serviceWorker.register('./recv-sw.js?v=20260706-105439-squarecam1');
     }
 
     var video = document.querySelector('#video');

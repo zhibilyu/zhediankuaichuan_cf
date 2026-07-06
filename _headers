@@ -17,6 +17,10 @@
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: no-cache
 
+/recv.2026-05-09T0146.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache
+
 /*.wasm
   Content-Type: application/wasm
   Cache-Control: public, max-age=31536000, immutable

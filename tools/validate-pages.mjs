@@ -19,11 +19,13 @@ const requiredFiles = [
   'sw.js',
 ];
 
+const pageVersion = '20260706-105439-squarecam1';
+
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
   '<title>浙电快传</title>',
-  'app-shell.css?v=20260705-130755-cachebust1',
-  'app-shell.js?v=20260705-130755-cachebust1',
+  `app-shell.css?v=${pageVersion}`,
+  `app-shell.js?v=${pageVersion}`,
   'id="zdkc-app"',
   'id="app_title"',
   'id="camera_canvas"',
@@ -36,14 +38,15 @@ const mobileReceiverExpectations = [
   '对准动态码开始接收。',
   'ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
   'pwa-recv.2026-05-09T0146.json',
-  "navigator.serviceWorker.register('./recv-sw.js?v=20260705-130755-cachebust1')",
-  'recv.2026-05-09T0146.js',
+  `navigator.serviceWorker.register('./recv-sw.js?v=${pageVersion}')`,
+  `recv.2026-05-09T0146.js?v=${pageVersion}`,
   'zstd.2026-05-09T0146.js',
 ];
 
 const shellFiles = [
-  '/app-shell.css?v=20260705-130755-cachebust1',
-  '/app-shell.js?v=20260705-130755-cachebust1',
+  `/app-shell.css?v=${pageVersion}`,
+  `/app-shell.js?v=${pageVersion}`,
+  `/recv.2026-05-09T0146.js?v=${pageVersion}`,
 ];
 
 function walk(dir) {
@@ -240,7 +243,7 @@ const shellJsPath = path.join(root, 'app-shell.js');
 if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
-    '页面版本：20260705-130755-cachebust1',
+    `页面版本：${pageVersion}`,
     'function resizeCameraCanvas()',
     'function detectActiveVideoBounds(video)',
     'function getCoverCrop(source, targetWidth, targetHeight)',
@@ -249,6 +252,7 @@ if (fs.existsSync(shellJsPath)) {
     'const activeBounds = detectActiveVideoBounds(video)',
     'const crop = getCoverCrop(activeBounds, canvas.width, canvas.height)',
     'ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, canvas.width, canvas.height)',
+    "canvas.classList.add('is-live')",
     'requestAnimationFrame(drawCameraCanvasFrame)',
   ];
 
@@ -265,13 +269,13 @@ if (fs.existsSync(recvRuntimePath)) {
   const recvExpectations = [
     "const isPortrait = matchMedia('all and (orientation:portrait)').matches",
     'const idealWidth = isPortrait ? 1080 : 1920',
-    'const idealHeight = isPortrait ? 1920 : 1080',
-    'aspectRatio: isPortrait ? 9 / 16 : 16 / 9',
+    'const idealHeight = isPortrait ? 1080 : 1080',
+    'aspectRatio: { ideal: isPortrait ? 1 : 16 / 9 }',
   ];
 
   for (const expected of recvExpectations) {
     if (!recvRuntime.includes(expected)) {
-      errors.push(`recv runtime must request a portrait camera stream on phones: ${expected}`);
+      errors.push(`recv runtime must request a square camera stream on phones: ${expected}`);
     }
   }
 }

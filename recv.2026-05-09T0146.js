@@ -226,14 +226,14 @@ var Recv = function () {
 
       const isPortrait = matchMedia('all and (orientation:portrait)').matches;
       const idealWidth = isPortrait ? 1080 : 1920;
-      const idealHeight = isPortrait ? 1920 : 1080;
+      const idealHeight = isPortrait ? 1080 : 1080;
 
       var constraints = {
         audio: false,
         video: {
-          width: { min: 720, ideal: idealWidth }, // Request HD but keep portrait phones portrait.
+          width: { min: 720, ideal: idealWidth }, // Request HD and prefer a square scan stream on phones.
           height: { min: 720, ideal: idealHeight },
-          aspectRatio: isPortrait ? 9 / 16 : 16 / 9,
+          aspectRatio: { ideal: isPortrait ? 1 : 16 / 9 },
           facingMode: 'environment',
           exposureMode: 'continuous',
           focusMode: 'continuous',
