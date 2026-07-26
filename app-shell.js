@@ -11,7 +11,7 @@
     usageTitle: '使用说明',
     usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或转发到微信。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260706-170341-androidauto1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260727-005450-anchorrepair2\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
     shareWechat: '转发到微信',
     close: '确定',
@@ -121,7 +121,8 @@
     if (!state.pendingFile || !state.nativeDownload) {
       return;
     }
-    state.nativeDownload(state.pendingFile.name, state.pendingFile.blob);
+    const downloadBlob = new Blob([state.pendingFile.blob], { type: 'application/octet-stream' });
+    state.nativeDownload(state.pendingFile.name, downloadBlob);
     setStatus(text.receivedStatus(state.pendingFile.name), true);
   }
 

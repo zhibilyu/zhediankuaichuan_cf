@@ -235,6 +235,13 @@ var Recv = function () {
     return { pixels, format, width, height };
   }
 
+  function _copyAnchorRepairedFrame() {
+    if (!globalThis.CimbarAnchorRepair) {
+      return null;
+    }
+    return CimbarAnchorRepair.copyFrame(_video);
+  }
+
   // public interface
   return {
     init: function (video, num_workers) {
@@ -265,7 +272,7 @@ var Recv = function () {
       // clean up _workers if exists?
       _workers = [];
       for (let i = 0; i < num_workers; i++) {
-        _workers.push(new Worker('recv-worker.2026-05-09T0146.js'));
+        _workers.push(new Worker('recv-worker.2026-05-09T0146.js?v=20260727-005450-anchorrepair2'));
 
         _workers[i].onmessage = (event) => {
           Recv.on_decode(i, event.data);
@@ -414,7 +421,7 @@ var Recv = function () {
       else {
         Recv.frames_in_flight_incr();
         try {
-          const frame = _copyDecodeCanvasFrame() || _copyVideoFrame(now);
+          const frame = _copyAnchorRepairedFrame() || _copyDecodeCanvasFrame() || _copyVideoFrame(now);
           if (_captureNextFrame == 1) {
             _captureNextFrame = 0;
             Recv.download_bytes(frame.pixels, frame.width + "x" + frame.height + "x" + _counter + "." + frame.format);

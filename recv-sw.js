@@ -1,9 +1,10 @@
 
-var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-androidauto1';
+var _cacheName = 'zhediankuaichuan-recv-v0.6.6-zd15d-42-anchorrepair2';
 var _cacheFiles = [
   '/',
-  '/app-shell.css?v=20260706-170341-androidauto1',
-  '/app-shell.js?v=20260706-170341-androidauto1',
+  '/anchor-repair.js?v=20260727-005450-anchorrepair2',
+  '/app-shell.css?v=20260727-005450-anchorrepair2',
+  '/app-shell.js?v=20260727-005450-anchorrepair2',
   '/index.html',
   '/recv.html',
   '/cimbar_js.2026-05-09T0146.js',
@@ -12,8 +13,8 @@ var _cacheFiles = [
   '/icon-192x192.png',
   '/icon-512x512.png',
   '/icon-512x512-maskable.png',
-  '/recv.2026-05-09T0146.js?v=20260706-170341-androidauto1',
-  '/recv-worker.2026-05-09T0146.js',
+  '/recv.2026-05-09T0146.js?v=20260727-005450-anchorrepair2',
+  '/recv-worker.2026-05-09T0146.js?v=20260727-005450-anchorrepair2',
   '/pwa-recv.2026-05-09T0146.json',
   '/zstd.2026-05-09T0146.js'
 ];

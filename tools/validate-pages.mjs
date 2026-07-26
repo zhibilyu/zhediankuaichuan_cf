@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -7,6 +8,7 @@ const textExtensions = new Set(['.html', '.js', '.json', '.css']);
 const requiredFiles = [
   '_headers',
   '_redirects',
+  'anchor-repair.js',
   'app-shell.css',
   'app-shell.js',
   'favicon.ico',
@@ -19,12 +21,13 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260706-170341-androidauto1';
+const pageVersion = '20260727-005450-anchorrepair2';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
   '<title>浙电快传</title>',
   `app-shell.css?v=${pageVersion}`,
+  `anchor-repair.js?v=${pageVersion}`,
   `app-shell.js?v=${pageVersion}`,
   'id="zdkc-app"',
   'id="app_title"',
@@ -44,9 +47,11 @@ const mobileReceiverExpectations = [
 ];
 
 const shellFiles = [
+  `/anchor-repair.js?v=${pageVersion}`,
   `/app-shell.css?v=${pageVersion}`,
   `/app-shell.js?v=${pageVersion}`,
   `/recv.2026-05-09T0146.js?v=${pageVersion}`,
+  `/recv-worker.2026-05-09T0146.js?v=${pageVersion}`,
 ];
 
 function walk(dir) {
@@ -247,6 +252,8 @@ if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
     `页面版本：${pageVersion}`,
+    "const downloadBlob = new Blob([state.pendingFile.blob], { type: 'application/octet-stream' });",
+    'state.nativeDownload(state.pendingFile.name, downloadBlob);',
     'function resizeCameraCanvas()',
     'function detectActiveVideoBounds(video)',
     'function getCoverCrop(source, targetWidth, targetHeight)',
@@ -277,19 +284,97 @@ if (fs.existsSync(recvRuntimePath)) {
     'const idealHeight = isPortrait ? 1920 : 1080',
     'aspectRatio: { ideal: isPortrait ? 9 / 16 : 16 / 9 }',
     'function _copyDecodeCanvasFrame()',
+    'CimbarAnchorRepair.copyFrame(_video)',
     'document.getElementById("camera_canvas")',
     'var _decodeSize = 1024',
     'ctx.drawImage(canvas, 0, 0, _decodeSize, _decodeSize)',
     'const image = ctx.getImageData(0, 0, _decodeSize, _decodeSize)',
-    'const frame = _copyDecodeCanvasFrame() || _copyVideoFrame(now)',
+    'const frame = _copyAnchorRepairedFrame() || _copyDecodeCanvasFrame() || _copyVideoFrame(now)',
     'const modeVals = [4, 68]',
     'format: "RGB"',
+    `new Worker('recv-worker.2026-05-09T0146.js?v=${pageVersion}')`,
   ];
 
   for (const expected of recvExpectations) {
     if (!recvRuntime.includes(expected)) {
       errors.push(`recv runtime must request a portrait camera stream on phones and crop it in the page: ${expected}`);
     }
+  }
+}
+
+const anchorRepairPath = path.join(root, 'anchor-repair.js');
+if (fs.existsSync(anchorRepairPath)) {
+  const context = { console };
+  context.globalThis = context;
+  vm.runInNewContext(fs.readFileSync(anchorRepairPath, 'utf8'), context, {
+    filename: anchorRepairPath,
+  });
+
+  const repair = context.CimbarAnchorRepair;
+  if (
+    !repair ||
+    typeof repair.findAnchorCenters !== 'function' ||
+    typeof repair.paintAnchor !== 'function' ||
+    typeof repair.copyFrame !== 'function'
+  ) {
+    errors.push('anchor-repair.js must expose findAnchorCenters, paintAnchor, and copyFrame');
+  } else {
+    const width = 240;
+    const height = 135;
+    const pixels = new Uint8ClampedArray(width * height * 4);
+
+    function setPixel(x, y, red, green, blue) {
+      const offset = (y * width + x) * 4;
+      pixels[offset] = red;
+      pixels[offset + 1] = green;
+      pixels[offset + 2] = blue;
+      pixels[offset + 3] = 255;
+    }
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        setPixel(x, y, 238, 238, 238);
+      }
+    }
+
+    for (let y = 18; y <= 116; y += 1) {
+      for (let x = 58; x <= 157; x += 1) {
+        const magenta = (x + y) % 2 === 0;
+        setPixel(x, y, magenta ? 245 : 0, magenta ? 0 : 230, magenta ? 210 : 70);
+      }
+    }
+
+    const expectedCenters = [
+      { x: 64, y: 24, secondary: false },
+      { x: 151, y: 24, secondary: false },
+      { x: 64, y: 110, secondary: false },
+      { x: 151, y: 110, secondary: true },
+    ];
+    for (const center of expectedCenters) {
+      repair.paintAnchor(pixels, width, height, center.x, center.y, 14, center.secondary);
+    }
+
+    const detected = repair.findAnchorCenters(pixels, width, height, width, height);
+    if (!Array.isArray(detected) || detected.length !== 4) {
+      errors.push('anchor repair must detect all four locator centers in a colorful frame with a white surround');
+    } else {
+      for (let index = 0; index < expectedCenters.length; index += 1) {
+        const actual = detected[index];
+        const expected = expectedCenters[index];
+        if (Math.abs(actual.x - expected.x) > 2 || Math.abs(actual.y - expected.y) > 2) {
+          errors.push(`anchor repair locator ${index} is not centered on the expected marker`);
+        }
+      }
+    }
+  }
+}
+
+const recvWorkerPath = path.join(root, 'recv-worker.2026-05-09T0146.js');
+if (fs.existsSync(recvWorkerPath)) {
+  const recvWorker = fs.readFileSync(recvWorkerPath, 'utf8');
+  const rgbTypeMapping = 'if (format == "RGB") {\n        type = 3;\n      }';
+  if (!recvWorker.includes(rgbTypeMapping)) {
+    errors.push('recv worker must pass packed RGB camera frames to wasm with pixel type 3');
   }
 }
 

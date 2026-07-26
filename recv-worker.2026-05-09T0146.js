@@ -35,7 +35,10 @@ var RecvWorker = function () {
       }
 
       var type = 4;
-      if (format == "NV12") {
+      if (format == "RGB") {
+        type = 3;
+      }
+      else if (format == "NV12") {
         type = 12;
       }
       else if (format == "I420") {
