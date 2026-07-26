@@ -9,14 +9,14 @@
     receivedTitle: '文件接收完成',
     receivedStatus: (name) => `已接收文件：${name}\n点击处理`,
     usageTitle: '使用说明',
-    usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或转发到微信。',
+    usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或分享到其他应用。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260727-005450-anchorrepair2\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260727-061922-shareapps1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
-    shareWechat: '转发到微信',
+    shareOtherApps: '分享到其他应用',
     close: '确定',
     reset: '重置',
-    shareFallback: '当前浏览器不能直接转发，已改为保存到本地。'
+    shareFallback: '当前浏览器不支持系统分享，请使用保存到本地。'
   };
 
   const state = {
@@ -150,7 +150,6 @@
       console.warn('share failed', error);
     }
 
-    savePendingFile();
     showToast(text.shareFallback);
   }
 
@@ -161,7 +160,7 @@
 
     openDialog(text.receivedTitle, state.pendingFile.name, [
       { label: text.saveLocal, handler: savePendingFile },
-      { label: text.shareWechat, handler: sharePendingFile },
+      { label: text.shareOtherApps, handler: sharePendingFile },
       { label: text.reset, secondary: true, handler: resetReceiver }
     ]);
   }

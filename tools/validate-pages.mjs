@@ -21,7 +21,7 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260727-005450-anchorrepair2';
+const pageVersion = '20260727-061922-shareapps1';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
@@ -252,6 +252,10 @@ if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
     `页面版本：${pageVersion}`,
+    "usageBody: '1. 将摄像头对准发送端显示的动态码。\\n2. 接收过程中保持手机稳定。\\n3. 接收完成后选择保存到本地或分享到其他应用。'",
+    "shareOtherApps: '分享到其他应用'",
+    "shareFallback: '当前浏览器不支持系统分享，请使用保存到本地。'",
+    '{ label: text.shareOtherApps, handler: sharePendingFile }',
     "const downloadBlob = new Blob([state.pendingFile.blob], { type: 'application/octet-stream' });",
     'state.nativeDownload(state.pendingFile.name, downloadBlob);',
     'function resizeCameraCanvas()',
@@ -272,6 +276,15 @@ if (fs.existsSync(shellJsPath)) {
     if (!js.includes(expected)) {
       errors.push(`app-shell.js must render a full-height canvas camera preview and expose the page version: ${expected}`);
     }
+  }
+
+  const shareFunction = js.match(
+    /async function sharePendingFile\(\) \{[\s\S]*?\r?\n  \}\r?\n\r?\n  function showReceivedDialog/
+  );
+  if (!shareFunction) {
+    errors.push('app-shell.js must define sharePendingFile before showReceivedDialog');
+  } else if (shareFunction[0].includes('savePendingFile()')) {
+    errors.push('sharePendingFile must not download a fallback copy');
   }
 }
 
