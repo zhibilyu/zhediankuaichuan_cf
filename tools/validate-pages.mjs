@@ -21,7 +21,7 @@ const requiredFiles = [
   'sw.js',
 ];
 
-const pageVersion = '20260727-061922-shareapps1';
+const pageVersion = '20260727-220839-safarishare1';
 
 const mobileReceiverExpectations = [
   '<html lang="zh-CN"',
@@ -252,11 +252,13 @@ if (fs.existsSync(shellJsPath)) {
   const js = fs.readFileSync(shellJsPath, 'utf8');
   const jsExpectations = [
     `页面版本：${pageVersion}`,
-    "usageBody: '1. 将摄像头对准发送端显示的动态码。\\n2. 接收过程中保持手机稳定。\\n3. 接收完成后选择保存到本地或分享到其他应用。'",
+    "usageBody: '1. 将摄像头对准发送端显示的动态码。\\n2. 接收过程中保持手机稳定。\\n3. 接收完成后可直接分享；浏览器不支持的格式请保存到本地后分享。'",
     "shareOtherApps: '分享到其他应用'",
-    "shareFallback: '当前浏览器不支持系统分享，请使用保存到本地。'",
-    '{ label: text.shareOtherApps, handler: sharePendingFile }',
-    "const downloadBlob = new Blob([state.pendingFile.blob], { type: 'application/octet-stream' });",
+    "shareUnavailable: '当前浏览器不支持直接分享文件，请使用保存到本地。'",
+    "shareTypeUnsupported: '当前浏览器不支持直接分享此文件格式，请使用保存到本地。'",
+    "shareFailed: '系统分享未能打开，请使用保存到本地。'",
+    '{ label: text.shareOtherApps, close: false, handler: sharePendingFile }',
+    'type: inferShareMimeType(state.pendingFile.name, state.pendingFile.blob.type)',
     'state.nativeDownload(state.pendingFile.name, downloadBlob);',
     'function resizeCameraCanvas()',
     'function detectActiveVideoBounds(video)',
@@ -283,8 +285,48 @@ if (fs.existsSync(shellJsPath)) {
   );
   if (!shareFunction) {
     errors.push('app-shell.js must define sharePendingFile before showReceivedDialog');
-  } else if (shareFunction[0].includes('savePendingFile()')) {
-    errors.push('sharePendingFile must not download a fallback copy');
+  } else {
+    if (shareFunction[0].includes('savePendingFile()')) {
+      errors.push('sharePendingFile must not download a fallback copy');
+    }
+    if (!/const payload = \{\s*files: \[file\]\s*\};/.test(shareFunction[0])) {
+      errors.push('sharePendingFile must send files only for Safari compatibility');
+    }
+    if (!shareFunction[0].includes("error.name === 'AbortError'")) {
+      errors.push('sharePendingFile must treat closing the system share sheet as a user cancellation');
+    }
+  }
+
+  const mimeTableMatch = js.match(
+    /const SHARE_MIME_TYPES = Object\.freeze\((\{[\s\S]*?\})\);/
+  );
+  const mimeFunctionMatch = js.match(
+    /function inferShareMimeType\(fileName, declaredType\) \{[\s\S]*?\r?\n  \}/
+  );
+  if (!mimeTableMatch || !mimeFunctionMatch) {
+    errors.push('app-shell.js must define a testable file-extension MIME map for Web Share');
+  } else {
+    const mimeContext = {};
+    vm.runInNewContext(
+      `const SHARE_MIME_TYPES = ${mimeTableMatch[1]}; ${mimeFunctionMatch[0]}; result = [
+        inferShareMimeType('report.pdf', ''),
+        inferShareMimeType('PHOTO.JPG', 'application/octet-stream'),
+        inferShareMimeType('document.docx', ''),
+        inferShareMimeType('notebook.ipynb', ''),
+        inferShareMimeType('archive.unknown', '')
+      ];`,
+      mimeContext
+    );
+    const expectedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/x-ipynb+json',
+      'application/octet-stream',
+    ];
+    if (JSON.stringify(mimeContext.result) !== JSON.stringify(expectedMimeTypes)) {
+      errors.push('file-extension MIME inference must preserve PDF, image, Office, notebook, and unknown files');
+    }
   }
 }
 

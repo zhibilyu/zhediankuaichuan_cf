@@ -9,15 +9,85 @@
     receivedTitle: '文件接收完成',
     receivedStatus: (name) => `已接收文件：${name}\n点击处理`,
     usageTitle: '使用说明',
-    usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后选择保存到本地或分享到其他应用。',
+    usageBody: '1. 将摄像头对准发送端显示的动态码。\n2. 接收过程中保持手机稳定。\n3. 接收完成后可直接分享；浏览器不支持的格式请保存到本地后分享。',
     aboutTitle: '关于',
-    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260727-061922-shareapps1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
+    aboutBody: '作者：吕知彼\n版本号：0.6.6-zd15d (42)\n页面版本：20260727-220839-safarishare1\n安装包：ZheDianKuaiChuan-v0.6.6-zd15d-42-release.apk',
     saveLocal: '保存到本地',
     shareOtherApps: '分享到其他应用',
     close: '确定',
     reset: '重置',
-    shareFallback: '当前浏览器不支持系统分享，请使用保存到本地。'
+    shareUnavailable: '当前浏览器不支持直接分享文件，请使用保存到本地。',
+    shareTypeUnsupported: '当前浏览器不支持直接分享此文件格式，请使用保存到本地。',
+    shareFailed: '系统分享未能打开，请使用保存到本地。'
   };
+
+  const SHARE_MIME_TYPES = Object.freeze({
+    '.7z': 'application/x-7z-compressed',
+    '.apk': 'application/vnd.android.package-archive',
+    '.avif': 'image/avif',
+    '.bmp': 'image/bmp',
+    '.css': 'text/css',
+    '.csv': 'text/csv',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.ehtml': 'text/html',
+    '.epub': 'application/epub+zip',
+    '.flac': 'audio/flac',
+    '.gif': 'image/gif',
+    '.gz': 'application/gzip',
+    '.heic': 'image/heic',
+    '.heif': 'image/heif',
+    '.htm': 'text/html',
+    '.html': 'text/html',
+    '.ico': 'image/x-icon',
+    '.ipynb': 'application/x-ipynb+json',
+    '.jfif': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.jpg': 'image/jpeg',
+    '.json': 'application/json',
+    '.key': 'application/vnd.apple.keynote',
+    '.m4a': 'audio/x-m4a',
+    '.m4v': 'video/mp4',
+    '.md': 'text/markdown',
+    '.mov': 'video/quicktime',
+    '.mp3': 'audio/mpeg',
+    '.mp4': 'video/mp4',
+    '.mpeg': 'video/mpeg',
+    '.mpg': 'video/mpeg',
+    '.numbers': 'application/vnd.apple.numbers',
+    '.oga': 'audio/ogg',
+    '.ogg': 'audio/ogg',
+    '.ogm': 'video/ogg',
+    '.ogv': 'video/ogg',
+    '.opus': 'audio/ogg',
+    '.pages': 'application/vnd.apple.pages',
+    '.pdf': 'application/pdf',
+    '.pjp': 'image/jpeg',
+    '.pjpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.rar': 'application/vnd.rar',
+    '.rtf': 'application/rtf',
+    '.shtm': 'text/html',
+    '.shtml': 'text/html',
+    '.svg': 'image/svg+xml',
+    '.svgz': 'image/svg+xml',
+    '.tar': 'application/x-tar',
+    '.text': 'text/plain',
+    '.tif': 'image/tiff',
+    '.tiff': 'image/tiff',
+    '.txt': 'text/plain',
+    '.wav': 'audio/wav',
+    '.weba': 'audio/webm',
+    '.webm': 'video/webm',
+    '.webp': 'image/webp',
+    '.xbm': 'image/x-xbitmap',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.xml': 'application/xml',
+    '.zip': 'application/zip'
+  });
 
   const state = {
     pendingFile: null,
@@ -117,11 +187,21 @@
     }
   }
 
+  function inferShareMimeType(fileName, declaredType) {
+    const normalizedName = String(fileName || '').toLowerCase();
+    const extensionStart = normalizedName.lastIndexOf('.');
+    const extension = extensionStart >= 0 ? normalizedName.slice(extensionStart) : '';
+    const normalizedType = String(declaredType || '').trim().toLowerCase();
+    return SHARE_MIME_TYPES[extension] || normalizedType || 'application/octet-stream';
+  }
+
   function savePendingFile() {
     if (!state.pendingFile || !state.nativeDownload) {
       return;
     }
-    const downloadBlob = new Blob([state.pendingFile.blob], { type: 'application/octet-stream' });
+    const downloadBlob = new Blob([state.pendingFile.blob], {
+      type: inferShareMimeType(state.pendingFile.name, state.pendingFile.blob.type)
+    });
     state.nativeDownload(state.pendingFile.name, downloadBlob);
     setStatus(text.receivedStatus(state.pendingFile.name), true);
   }
@@ -131,26 +211,38 @@
       return;
     }
 
-    try {
-      const file = new File([state.pendingFile.blob], state.pendingFile.name, {
-        type: state.pendingFile.blob.type || 'application/octet-stream'
-      });
-      const payload = {
-        files: [file],
-        title: state.pendingFile.name,
-        text: state.pendingFile.name
-      };
-
-      if (navigator.canShare && navigator.canShare(payload) && navigator.share) {
-        await navigator.share(payload);
-        setStatus(text.receivedStatus(state.pendingFile.name), true);
-        return;
-      }
-    } catch (error) {
-      console.warn('share failed', error);
+    if (typeof navigator.share !== 'function') {
+      showToast(text.shareUnavailable);
+      return;
     }
 
-    showToast(text.shareFallback);
+    try {
+      const file = new File([state.pendingFile.blob], state.pendingFile.name, {
+        type: inferShareMimeType(state.pendingFile.name, state.pendingFile.blob.type)
+      });
+      const payload = {
+        files: [file]
+      };
+
+      if (typeof navigator.canShare === 'function' && !navigator.canShare(payload)) {
+        showToast(text.shareTypeUnsupported);
+        return;
+      }
+
+      await navigator.share(payload);
+      closeDialog();
+      setStatus(text.receivedStatus(state.pendingFile.name), true);
+    } catch (error) {
+      if (error && error.name === 'AbortError') {
+        return;
+      }
+      console.warn('share failed', error);
+      if (error && (error.name === 'NotAllowedError' || error.name === 'TypeError')) {
+        showToast(text.shareTypeUnsupported);
+        return;
+      }
+      showToast(text.shareFailed);
+    }
   }
 
   function showReceivedDialog() {
@@ -160,7 +252,7 @@
 
     openDialog(text.receivedTitle, state.pendingFile.name, [
       { label: text.saveLocal, handler: savePendingFile },
-      { label: text.shareOtherApps, handler: sharePendingFile },
+      { label: text.shareOtherApps, close: false, handler: sharePendingFile },
       { label: text.reset, secondary: true, handler: resetReceiver }
     ]);
   }
